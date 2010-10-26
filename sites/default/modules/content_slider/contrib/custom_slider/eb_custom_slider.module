@@ -1,0 +1,549 @@
+<?php
+
+
+// $id: content_slider.module,v 1.2 2009/01/10 19:22:22 ebizondrupalservices exp $
+
+/**
+ * @file
+ *  display content in 'featured content' block using jquery.
+ */
+
+/**
+ * implementation of hook_node_info().
+ */
+function eb_custom_slider_node_info() {
+
+  return array (
+      'eb_custom_slider' => array (
+        'name' => t('Featured Slider Entry'),
+        'module' => 'eb_custom_slider',
+        'description' => t('Slider is a single content entry for the slider.'
+          ),
+          )
+      );
+}
+
+
+/**
+ * implementation of hook_access().
+ */
+function eb_custom_slider_access($op, $node, $account) {
+  switch ($op) {
+    case 'create' :
+      // anonymous users cannot post even if they have the permission.
+      return user_access('create eb_custom_slider entries', $account) && $account->uid ? true : null;
+    case 'update' :
+      return user_access('edit any slider entry', $account) || (user_access('edit own eb_custom_slider entries', $account) && ($node->uid == $account->uid)) ? true : null;
+    case 'delete' :
+      return user_access('delete any eb_custom_slider entry', $account) || (user_access('delete own eb_custom_slider entries', $account) && ($node->uid == $account->uid)) ? true : null;
+  }
+}
+
+/**
+ * implementation of hook_user().
+ */
+function eb_custom_slider_user($type, & $edit, & $user) {
+  return 0;
+}
+
+/**
+ * implementation of hook_form().
+ */
+
+function eb_custom_slider_form(& $node) {
+  global $nid;
+  $iid = isset ($_get['iid']) ? (int) $_get['iid'] : 0;
+  $type = node_get_types('type', $node);
+
+  if (empty ($node->body)) {
+    if ($nid && $slider = node_load($nid)) {
+      $node->body = '<em>' . $slider->body . '</em> [' . l($slider->name, "node/$nid") . ']';
+    }
+
+    if ($iid && $item = db_fetch_object(db_query('SELECT i.*, f.title as ftitle, f.link as flink FROM {aggregator_item} i, {aggregator_feed} f WHERE i.iid = %d AND i.fid = f.fid', $iid))) {
+      $node->title = $item->title;
+      // note: $item->description has been validated on aggregation.
+      $node->body = '<a href="' . check_url($item->link) . '">' . check_plain($item->title) . '</a> - <em>' . $item->description . '</em> [<a href="' . check_url($item->flink) . '">' . check_plain($item->ftitle) . "</a>]\n";
+    }
+  }
+
+  $form['title'] = array (
+      '#type' => 'textfield',
+      '#title' => check_plain($type->title_label
+        ), '#required' => true, '#default_value' => !empty ($node->title) ? $node->title : null, '#weight' => -5);
+
+  $form['body_field'] = node_body_field($node, $type->body_label, $type->min_word_count);
+
+  $form['picture'] = array (
+      '#type' => 'fieldset',
+      '#title' => t('Slider Image'
+        ));
+  $form['picture']['picture_upload'] = array (
+      '#type' => 'file',
+      '#default_value' => variable_get('picture_upload', null),
+      '#title' => t('Upload Slider Image'),
+      '#required' => false,
+      '#size' => 48,
+      '#description' => t('Maximum Dimensions are %dimensions and the maximum size is %size kb.', array (
+            '%dimensions' => '',
+            '%size' => '30'
+            )
+      )
+      );
+
+  //$form['video'] = array (
+  //	'#type' => 'textarea',
+  //	'#title' => 'video embedd',
+  //	'#required' => false,
+  //	'#default_value' => null,
+  //	'#weight' => 10,
+  //	'#description' => 'paste embedd code here'
+  //);
+
+  $form['picture']['image_url'] = array (
+      '#type' => 'textfield',
+      '#title' => 'Link Url',
+      '#required' => false,
+      '#default_value' => variable_get('image_url', null),
+      '#weight' => 10,
+      '#description' => 'Paste the url for the image here.'
+      );
+
+
+  //$form['video_upload'] = array (
+  //		'#type' => 'fieldset',
+  //		'#title' => t('Slider Video'
+  //	));	
+  //	$form['video_upload']['embed'] = emvideo_widget($form, $form_state, $field, $items, $delta = 0);
+
+  //	 $form['video_upload']['embed']['embed']['#description'] = 'Enter Video embed code here';
+  //	 $form['video_upload']['embed']['embed']['#title'] = "Embed Video Code ";
+
+  $form['#validate'][] = 'slider_validate_picture';
+
+  $form['#attributes']['enctype'] = 'multipart/form-data';
+
+  return $form;
+}
+
+
+function eb_custom_slider_nodeapi(& $node, $op, $a3 = null, $a4 = null) {
+  switch ($op) {
+    case 'presave' :
+      if ($node->type == 'eb_custom_slider') {
+
+      }
+      break;
+    case 'insert' :
+      if ($node->type == 'eb_custom_slider') {  
+
+        if($node->picture ){ 
+          //$query = db_query("INSERT INTO slider(slider_title, image_path , nid , url , thumb) values( '%s', '%s' , %d , '%s' , '%s')", $node->title, $node->picture, $node->nid, $node->image_url, $node->embed['emthumb']['emthumb']['emthumb']['emthumb']['filepath']);
+        }
+        if($node->picture && !$node->embed['embed']){ 
+          $query = db_query("INSERT INTO slider(slider_title, image_path , nid , url ) values( '%s', '%s' , %d , '%s')", $node->title, $node->picture, $node->nid, $node->image_url);
+        }else if($node->embed['embed'] && 0){
+          if (isset($node->embed['emthumb']['emthumb']['emthumb']['emthumb']['filepath'])){
+            $thumb = $node->embed['emthumb']['emthumb']['emthumb']['emthumb']['filepath'];
+          }else {
+            $thumb = '';
+          }
+          $pos = strpos( $node->embed['embed'],'</embed>');
+          $newEmbedCode = substr($node->embed['embed'], 0, $pos-1).' wmode="opaque"'.substr($node->embed['embed'], $pos-1);
+          $pos = strpos( $newEmbedCode,'<embed ');
+          $newEmbedCode = substr($newEmbedCode, 0, $pos).'<param name="wmode" value="opaque" />'.substr($newEmbedCode, $pos);
+          $node->embed['embed'] = $newEmbedCode;
+
+          $query = db_query("INSERT INTO slider_video(slider_title, videocode , nid, thumb) values('%s', '%s' , %d, '%s')", $node->title, $node->embed['embed'], $node->nid, $thumb);
+          $query = db_query("INSERT INTO slider(slider_title, image_path , nid, url) values('%s', '%s' , %d, '%s')", $node->title, $thumb, $node->nid, '');
+        }
+      }
+      break;
+    case 'update' :
+      if ($node->type == 'eb_custom_slider') {
+        $video = $node->embed['embed'];
+        $image = $node->picture;
+        if($video){
+          db_query("UPDATE slider_video set videocode='%s' WHERE nid=$node->nid",$video);
+        }
+        if($image){
+          db_query("UPDATE slider set image_path='%s' WHERE nid=$node->nid",$image);
+        }
+        if($node->image_url){
+          db_query("UPDATE slider set url='%s' WHERE nid=$node->nid",$node->image_url);
+        }
+        if(isset($node->embed['emthumb']['emthumb']['emthumb']['emthumb']['filepath'])) {
+          db_query("UPDATE slider_video set thumb='%s' WHERE nid=%d",$node->embed['emthumb']['emthumb']['emthumb']['emthumb']['filepath'],$node->nid);
+
+        }
+
+      }
+
+  }
+}
+
+
+
+function eb_custom_slider_install_cck_node() {
+
+  module_load_include('inc', 'eb_custom_slider', 'slider_video');
+
+  $content = eb_custom_slider_cck_export(); // in modulename.ccknodedef.inc
+
+  // CCK content_copy.module may not be enabled, so make sure it is included
+
+  require_once './' . drupal_get_path('module', 'content') .  '/modules/content_copy/content_copy.module';
+
+  $form_state['values']['type_name'] = 'eb_custom_slider';
+  $form_state['values']['macro'] = '$content = ' . var_export($content, TRUE) . ';';
+  // form provided by content_copy.module 
+  drupal_execute('content_copy_import_form', $form_state);
+  content_clear_type_cache();
+
+}
+
+function slider_validate_picture(& $form, & $form_state) {
+  global $nid;
+  //print_r($form_state);
+  $validators = array (
+      'file_validate_is_image' => array (),
+      'file_validate_image_resolution' => array (
+        '400x300'
+        ),
+      'file_validate_size' => array (
+        30 * 1024
+        ),
+
+      );
+  if ($file = file_save_upload('picture_upload', $validators)) {
+    // remove the old picture.
+    if (isset ($form_state['values']['_product']->image_path) && file_exists($form_state['values']['_product']->image_path)) {
+      file_delete($form_state['values']['_product']->image_path);
+    }
+
+    $productid = 0;
+    if (!isset ($form_state['values']['productid'])) { // execute in case of new product
+      $query = "show table status like 'slider'";
+      $rs = db_query($query);
+      $row = db_fetch_object($rs);
+
+      $productid = isset ($row->auto_increment) ? $row->auto_increment : 0;
+    } else {
+      $productid = $form_state['values']['productid'];
+    }
+
+    $info = image_get_info($file->filepath);
+
+    $destination = variable_get('image_default_path', 'images/temp') . '/picture-' . time() . '.' . $info['extension'];
+
+    //$query = db_query("insert INTO slider(slider_title, image_path, nid) values('%s', '%s' , '%d')",$form_state['values']['title'],$destination,$nid);
+
+    if (file_copy($file, $destination, file_exists_replace)) {
+      $form_state['values']['picture'] = $file->filepath;
+    } else {
+      form_set_error('picture_upload', t("failed to upload the picture image; the %directory directory doesn't exist or is not writable.", array (
+              '%directory' => variable_get('product_picture_path',
+                'product_pictures'
+                ))));
+    }
+  }
+}
+
+function eb_custom_slider_form_submit($form_id, $form) {
+  global $user;
+
+  $form_values = $form['values'];
+
+  $slider_title = trim($form_values['title']);
+  $image_path = $form_values['picture'];
+
+  drupal_set_message(t('Slider Image uploaded successfully.'));
+}
+
+/**
+ * implementation of hook_view().
+ */
+function eb_custom_slider_view($node, $teaser = false, $page = false) {
+  if ($page) {
+    // breadcrumb navigation. l() escapes the title, so we should not escape !name.
+    //drupal_set_breadcrumb(array(l(t('home'), null), l(t('slider'), 'eb_custom_slider'), l(t("!name's eb_custom_slider", array('!name' => $node->name)), 'slider/'. $node->uid)));
+
+  }
+  return node_prepare($node, $teaser);
+}
+
+/**
+ * implementation of hook_link().
+ */
+function eb_custom_slider_link($type, $node = null, $teaser = false) {
+  $links = array ();
+
+  return $links;
+}
+
+/**
+ * access callback for user slider pages.
+ */
+function eb_custom_slider_page_user_access($account) {
+  return 0;
+}
+
+/**
+ * helper function to determine if a user has slider posts already.
+ */
+function _eb_custom_slider_post_exists($account) {
+  return (bool) db_result(db_query_range(db_rewrite_sql("SELECT 1 FROM {node} n WHERE n.type = 'eb_custom_slider' AND n.uid = %d AND n.status = 1"), $account->uid, 0, 1));
+}
+
+/**
+ * implementation of hook_help().
+ */
+function eb_custom_slider_slider_help($section) {
+  switch ($section) {
+    case 'admin/help#content_slider' :
+      $output = "the content_slider module: display content AND image in slide show mode using jquery.";
+      return $output;
+
+    case 'admin/modules#description' :
+      return 'the content_slider module: display content AND image in slide show mode using jquery.';
+  }
+}
+
+/**
+ * implementation of hook_perm
+ */
+function eb_custom_slider_perm() {
+  return array (
+      'access content_slider',
+      'administer content_slider'
+      );
+}
+
+function eb_custom_slider_init(){
+  if (variable_get('install_cck', 0) != 1){
+    eb_custom_slider_install_cck_node();
+    variable_set('install_cck',1);
+
+  }
+}
+
+
+function eb_custom_slider_menu() {
+  $items = array ();
+
+  $items['admin/settings/content_slider'] = array (
+      'title' => 'eb_content_slider',
+      'description' => t('setting eb_content_slider.'), 
+       'page callback' => 'drupal_get_form', 
+       'page arguments' => array ( 'eb_custom_slider_admin_settings'), 
+       'access arguments' => array ('administer site configuration' ),
+       );
+
+
+  $items[] = array (
+      'path' => 'content_slider/list/' . arg(2), 
+      'title' => t('eb_content_slider'),
+      'page callback' => 'eb_custom_slider_page_list', 
+      'page arguments' => array (arg(2)),
+      'access arguments' => array (
+            'access content_slider'
+            ),
+       'type' => menu_callback,
+       );
+
+  return $items;
+}
+
+function eb_custom_slider_admin_settings() {
+
+  // only administrators can access this function
+  // generate the form - settings applying to all patterns first
+  $form['content_slider_settings'] = array (
+      '#type' => 'fieldset',
+      '#weight' => -20,
+      '#title' => t('basic settings'),
+      '#collapsible' => true,
+      '#collapsed' => false,
+      );
+
+  $form['content_slider_settings']['fade_enable'] = array (
+      '#type' => 'checkbox',
+      '#title' => t('enable fade'), 
+      '#default_value' => variable_get('fade_enable', 0), 
+      '#description' => t("Enable fade."), 
+      '#maxlength' => '1', 
+      '#size' => '1',);
+
+  $form['content_slider_settings']['fade_factor'] = array (
+      '#type' => 'textfield',
+      '#title' => t('fade factor'), 
+      '#default_value' => variable_get('fade_factor', 0.1),
+      );
+
+  $form['content_slider_settings']['content_slider_auto'] = array (
+      '#type' => 'checkbox',
+      '#title' => t('auto rotate contents'), 
+      '#default_value' => variable_get('content_slider_auto', 1),
+      '#description' => t("display content without mouse click."), 
+      '#maxlength' => '1', 
+      '#size' => '1',
+      );
+
+  $form['content_slider_settings']['content_slider_speed'] = array (
+      '#type' => 'textfield',
+      '#title' => t('glide animation duration (in milliseconds)'),
+      '#default_value' => variable_get('content_slider_speed', 1000),
+      );
+
+  $form['content_slider_settings']['revealtype'] = array (
+      '#type' => 'textfield',
+      '#title' => t('behavior of pagination links to reveal the slides: "click" or "mouseover"'), 
+      '#default_value' => variable_get('revealtype', 'mouseover'), 
+      '#description' => 'behavior of pagination links to reveal the slides: "click" or "mouseover"',);
+
+  // set direction of glide: "updown", "downup", "leftright", or "rightleft"'
+  //$output_body .=  'direction: "downup",
+
+  return system_settings_form($form);
+}
+
+/**
+ * implementation of hook_block().
+ *
+ */
+
+function eb_custom_slider_block($op = 'list', $delta = 0) {
+
+  global $base_url;
+
+  if ($op == 'list') {
+    $blocks[0]['info'] = 'content slider';
+    return $blocks;
+  }
+
+  if ($op == 'view') {
+
+    global $base_url;
+
+    switch ($delta) {
+      case 0 :
+        $content_type = $content_slider_source_1;
+        $block['subject'] = 'content slider';
+        $block['content'] = slider_make_blok();
+        break;
+    }
+    return $block;
+  }
+}
+
+function slider_make_blok() {
+
+  global $base_url;
+  drupal_add_css(drupal_get_path('module', 'eb_custom_slider') . '/contentslider.css');
+  drupal_add_js(drupal_get_path('module', 'eb_custom_slider') . '/contentslider.js');
+
+  $output_body = '';
+  $results = db_query("SELECT * FROM {node} n WHERE n.status = 1  AND n.type='eb_custom_slider'  order by n.created desc limit 0, 10");
+
+  global $base_url;
+  $output_body .= "<div class='slider_center_image'>";
+  if ($results) {
+    $output_body .= '<div id="slider">';
+
+    while ($data = db_fetch_object($results)) {
+
+      $load_value = node_load($data->nid);
+      
+      $newdata = db_fetch_object(db_query("SELECT * FROM slider WHERE nid = %d",$data->nid));
+
+    if ($newdata->image_path) { 
+      variable_set("node-imagepath-".$data->nid, $newdata->image_path);  
+      variable_set("node-url-".$data->nid, $newdata->url);
+    }
+      $output_body .= node_view($load_value, 0,1);
+  }
+    $output_body .= '</div>';
+
+    global $base_url;
+    $output_body .= '<div id="paginate-slider" style="font-size:10px;">';
+    //$output_body .= '<div class="page2" style="font-size:10px;"><div class= "next-arr"><a href="#next" class="next"><img src= "' . $base_url . '/' . drupal_get_path('module', 'eb_custom_slider') . '/larr.png"/> ' . '</a></div> ';
+    //$output_body .= '<div class= "prev-arr"><a href="#prev" class="prev"><img src= "' . $base_url . '/' . drupal_get_path('module', 'eb_custom_slider') . '/rarr.png"/> ' . '</a></div></div> ';
+
+    $results = db_query("SELECT *  FROM {node} n WHERE n.status =1 AND n.type='eb_custom_slider' order by n.created desc limit 0,4");
+    while ($data = db_fetch_object($results)) {
+      $load_value = node_load($data->nid);
+      $video = db_fetch_object(db_query("SELECT * FROM content_type_eb_custom_slider  WHERE nid = %d",$data->nid));
+
+      $newdata =  db_fetch_object(db_query("SELECT * FROM slider WHERE nid = %d",$data->nid));
+
+      if($video->field_video_embed){
+        $myimagedata = unserialize($video->field_video_data);
+        $myimage_small =  "<img class='thumb-img' src= '" .$myimagedata['thumbnail']['url']."'/>";;
+
+
+      }else 	if ($newdata->image_path) {
+        //$myimage_small = "<img src=".$base_url.'/'.$newdata->image_path." height='35' width='35' />" ;
+
+        $myimage_small = theme('imagecache', 'eb_custom_slider_thumb', $newdata->image_path);
+      }elseif($newdata->thumb){
+
+        $myimage_small = theme('imagecache', 'eb_custom_slider_thumb', $newdata->thumb);
+
+      }else {
+        $default_image = $base_url . '/' . path_to_theme() . '/' . 'images/drigg_default.png';
+        //$myimage = "<img src='lilies.jpg' height='35' width='35' />";
+        $myimage_small = theme('imagecache', 'eb_custom_slider_thumb',  drupal_get_path('module', 'eb_custom_slider').'/warning.jpg');
+      }
+
+      $output_body .= '<div class="a-tag">';
+      $path = 'node/' . $load_value->nid;
+      $output_body .= l($myimage_small, "", array (
+            'html' => true,
+            'attributes' => array (
+              'class' => 'toc'
+              )
+            )
+      );
+      //$output_body  .= $myimage_small;
+      $output_body .= '</div>';
+    }
+
+    $output_body .= '</div>';
+    $output_body .= "</div>";
+    $output_body .= '<script type="text/javascript">';
+    $output_body .= 'featuredcontentslider.init({' . "\n";
+        $output_body .= 'id: "slider",' . "\n";
+        $output_body .= 'contentsource: ["inline", ""], toc: "markup", nextprev: ["previous", "next"], revealtype: "' . variable_get('revealtype', 'mouseover') . '", enablefade: [' . variable_get('fade_enable', 0) . ', ' . variable_get('fade_factor', 0.1) . '],autorotate: [' . variable_get('content_slider_auto', 1) . ', ' . variable_get('content_slider_speed', 1000) . '], onchange: function(previndex, curindex){//event handler fired whenever script changes slide' . "\n";
+        $output_body .= '//previndex holds index of last slide viewed b4 current (1=1st slide, 2nd=2nd etc)' . "\n";
+        $output_body .= '//curindex holds index of currently shown slide (1=1st slide, 2nd=2nd etc)' . "\n" . '}})';
+        $output_body .= '</script>';
+  }
+  return $output_body;
+
+}
+
+function eb_custom_slider_page_list($i) {
+  $content_slider_item = variable_get("content_slider_item", 10);
+
+  $dse_news_total = db_query(" SELECT count(*) as total FROM {node} n WHERE n.type='slider" . $i . "' AND n.status=1");
+  $row_news = db_fetch_object($dse_news_total);
+  $news_total = $row_news->total;
+  $sql_counts = "SELECT $news_total";
+
+  $sql = " SELECT n.nid, n.title, r.teaser FROM {node} n inner join {node_revisions} r on r.nid = n.nid WHERE n.type = 'slider$i' AND n.status=1 order by n.created desc";
+  $sql = db_rewrite_sql($sql);
+
+  $results = pager_query($sql, $content_slider_item, 0, $sql_counts);
+
+  $output = "<div id='content_slider$i'>";
+
+  while ($node = db_fetch_object($results)) {
+    $output .= node_view(node_load($node->nid), 1);
+  }
+
+  $output .= theme('pager', null, $content_slider_item, 0);
+  $output .= '</div>';
+
+  return $output;
+}
+

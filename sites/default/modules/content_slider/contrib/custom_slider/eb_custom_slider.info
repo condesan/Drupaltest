@@ -1,0 +1,19 @@
+name = "Featured Content Slider Custom"
+description = "Display content and image in Slide show mode. This contribution automatically created the necessary content type called featured content slider, comes with inbuilt theming (resize images, thumnails), allows for videos in the slider. Module by Ebizon Technologie. (http://www.ebizontek.com)"
+
+dependencies[] = imagecache
+dependencies[] = image
+dependencies[] = imageapi
+dependencies[] = emfield
+dependencies[] = emvideo
+
+package = "other"
+core = 6.x
+
+
+; Information added by drupal.org packaging script on 2010-05-09
+version = "6.x-2.1"
+core = "6.x"
+project = "content_slider"
+datestamp = "1273413304"
+

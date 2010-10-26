@@ -1,0 +1,12 @@
+; $Id: ddblock.info,v 1.1.2.1 2009/09/16 03:35:02 ppblaauw Exp $
+name = Dynamic display block
+description = Displays dynamic content in a block.
+core = 6.x
+
+dependencies[] = "jquery_update"
+; Information added by drupal.org packaging script on 2010-07-11
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "ddblock"
+datestamp = "1278833905"
+

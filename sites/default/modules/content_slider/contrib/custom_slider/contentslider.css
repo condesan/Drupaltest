@@ -1,0 +1,100 @@
+.slider_title { color:#000000; font-size:12px; text-decoration:none;font-weight:bold; float:left; width:20%; margin-right:5px; }
+
+.slider_image #VideoPlayback{ height:190px; width:290px; }
+
+.a-tag object embed { height:40px; width:40px; }
+.a-tag embed { height:35px; width:35px; }
+
+.slider_image object { width:400px;height:300px;}
+
+.slider_image object embed { width:400px;height:300px;}
+.slider_image embed { width:400px;height:300px;}
+
+
+.s-body {clear:both;float:left;width:100%;font-size:11px;font-color: #cccccc;text-decoration:none;font-weight:Normal; }
+
+.slider_title  {padding-right:20px;}
+
+.page2{ float:right;left:0;margin-left:220px;margin-top:87px;position:absolute;width:250px;}
+
+.next-arr{float:left; }
+
+.prev-arr{ float:right;}
+
+.slider_center_image{ position:relative;height:auto;}
+
+.next-arr img{ border:none; }
+
+.prev-arr img{ border:none;}
+
+.slider_center_image{border:0px solid #ffffff;background:transparent url(images/slider_center.gif) repeat scroll 0 0; width:97%; float:left; padding:10px;}
+
+.slider_center_image #slider{width:90%;float:left; }
+
+.slider_center_image #paginate-slider{float:right;width:10%;overflow:hidden;height:295px;margin-right:0px;}
+
+.slider_center_image #paginate-slider .a-tag img{border:2px solid #597A9D;padding:2px;}
+
+.slider_center_image #paginate-slider .a-tag{font-size:0;margin-bottom:20px;
+width:55px;}
+
+.slider_center_image #paginate-slider .a-tag a.toc{ font-size:0px;}
+
+.slider_center_image #paginate-slider .a-tag a:hover img { border:2px solid red;padding:2px; }
+
+.slider_center_image #paginate-slider .a-tag a.selected img { border:2px solid red;padding:2px; }
+
+
+
+.prev-arr a {background:url(/larr.png);}
+
+.sliderwrapper{
+position: relative; /*leave as is*/
+overflow: hidden; /*leave as is*/
+border: 2px solid #ffffff;
+border-bottom-width: 2px;
+height: 300px;
+width:400px;
+}
+
+.sliderwrapper .contentdiv{
+visibility: hidden; /*leave as is*/
+position: absolute; /*leave as is*/
+left: 0;  /*leave as is*/
+top: 0;  /*leave as is*/
+padding: 5px;
+background: white;
+width: 390px; /*width of content DIVs within slider. Total width should equal slider's inner width (390+5+5=400) */
+height: 100%;
+filter:progid:DXImageTransform.Microsoft.alpha(opacity=100);
+-moz-opacity: 1;
+opacity: 1;
+}
+
+.pagination{
+width: 400px; /*Width of pagination DIV. Total width should equal slider's outer width (400+10+10=420)*/
+text-align: right;
+background-color: navy;
+padding: 5px 10px;
+}
+
+.pagination a{
+padding: 0 5px;
+text-decoration: none; 
+color: #00007D;
+background: white;
+}
+
+.pagination a:hover, .pagination a.selected{
+color: #000;
+background-color: #FEE496;
+}
+
+.thumb-img {
+width: 35px;
+height: 35px;
+}
+
+.slider-node .field-label {display: none;}
+.slider_title .field-label {display: none;}
+.slider_image .field-label {display: none;}

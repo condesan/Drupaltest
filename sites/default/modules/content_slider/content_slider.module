@@ -1,0 +1,203 @@
+<?php
+// $Id: content_slider.module,v 1.3 2010/05/09 13:07:15 ebizondrupalservices Exp $
+
+/**
+ * @file
+ *  Display content in 'featured content' block using jQuery.
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function content_slider_help($section) {
+  switch ($section) {
+    case 'admin/help#content_slider':
+      $output = t("The content_slider module: Display content and image in Slide show mode using jQuery.");
+      return $output;
+
+    case 'admin/modules#description':
+      return t("The content_slider module: Display content and image in Slide show mode using jQuery.");
+  }
+}
+
+/**
+ * Implementation of hook_perm()
+ */
+function content_slider_perm() {
+  // We don't need view permission as the module only defines blocks
+  // so users can set up proper permissions with Drupal blocks permissions
+  return array('administer content slider');
+}
+
+function content_slider_menu() {
+  $items = array();
+
+  $items['admin/settings/content_slider'] = array(
+    'title' => 'Content Slider',
+    'description' => 'Setting Content Slider.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('content_slider_admin_settings'),
+    'access arguments' => array('administer content slider'),
+  );
+
+  return $items;
+}
+
+function content_slider_admin_settings() {
+
+  // Defines form elements for sliders content type
+  $form['content_slider_source'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Slider content source (based on Drupal content-type)'),
+    '#description' => t('Enter the machine name of the content types you wish to use for each slider. Only one per slider, ex: story, page, image, etc.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+
+  $form['content_slider_source']['content_slider_source_0'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Content type for Slider 1'),
+    '#default_value' => variable_get('content_slider_source_0', 'page'),
+  );
+
+  $form['content_slider_source']['content_slider_source_1'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Content type for Slider 2'),
+    '#default_value' => variable_get('content_slider_source_1', 'story'),
+  );
+
+  $form['content_slider_source']['content_slider_source_2'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Content type for Slider 3'),
+    '#default_value' => variable_get('content_slider_source_2', 'featured'),
+  );
+
+  // General settings
+  $form['content_slider_settings'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Basic settings'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+
+  $form['content_slider_settings']['content_slider_auto'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Auto rotate contents'),
+    '#default_value' => variable_get('content_slider_auto', 1),
+    '#description' => t("Should the rotation be automatic?"),
+  );
+
+  $form['content_slider_settings']['content_slider_speed'] = array(
+    '#type' => 'textfield',
+    '#size' => 4,
+    '#title' => t('Glide animation duration (in milliseconds)'), // TODO
+    '#default_value' => variable_get('content_slider_speed', 1000),
+  );
+  
+  // Commented since this has I don't see where it is implemented
+  // 
+    // $form['content_slider_settings']['content_slider_direction'] = array(
+    //   '#type' => 'select',
+    //   '#title' => t('Set animation direction of glide'),
+    //   '#default_value' => variable_get('content_slider_direction', 'leftright'),
+    //   '#options' => array(
+    //     'updown'    => t('From up to down'),
+    //     'downup'    => t('From down to up'),
+    //     'leftright' => t('From left to right'),
+    //     'rightleft' => t('From right to left'),
+    //   ),
+    // );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Implementation of hook_block().
+ *
+ */
+function content_slider_block($op = 'list', $delta = 0) {
+
+  switch ($op) {
+    case 'list':
+      // This is an hard limit which isn't good
+      for ($i=0; $i < 3; $i++) {
+        $content_type = variable_get('content_slider_source_'. $i, '');
+        if ($content_type != '') {
+          $blocks[$i]['info'] = t('Content Slider !delta - !content_type', array('!delta' => $i, '!content_type' => $content_type));
+        }
+      }      
+      return $blocks;
+      break;
+    case 'view':
+      $content_type = variable_get('content_slider_source_'. $delta, '');
+      
+      if ($content_type != '') {
+        // We add necessary CSS and JavaScript files
+        drupal_add_css(drupal_get_path('module', 'content_slider') . '/contentslider.css');
+        drupal_add_js(drupal_get_path('module', 'content_slider'). '/contentslider.js');
+        
+        $nodes = content_slider_load_nodes($content_type);
+        
+        $block['subject'] = t('Content Slider !delta', array('!delta' => $delta));
+        $block['content'] = theme('content_slider', $nodes, $delta);
+        
+        $t_previous = t('Previous');
+        $t_next = t('Next');
+        $speed = variable_get('content_slider_speed', 1000);
+        $auto_rotate = (bool) variable_get('content_slider_auto', 1);
+        
+        $script .= "$(document).ready(function(){\n";
+        $script .= "  featuredcontentslider.init({\n";
+        $script .= "    id: 'slider$delta',\n";
+        $script .= "    contentsource: ['inline', ''],\n";
+        $script .= "    toc: '#increment',\n";
+        $script .= "    nextprev: ['$t_previous', '$t_next'],\n";
+        $script .= "    revealtype: 'click',\n";
+        $script .= "    enablefade: [true, 0.2],\n";
+        $script .= "    autorotate: [$auto_rotate, $speed],\n";
+        $script .= "  });\n";
+        $script .= "});\n";
+        
+        drupal_add_js($script, 'inline', 'header');
+      }
+      return $block;
+      break;
+  }
+}
+
+function content_slider_load_nodes($content_type, $delta) {
+  $nodes = array();
+  // I'm wondering why ORDER BY n.changed? wouldn't be n.created more accurate?
+  $result = db_query_range("SELECT n.nid FROM {node} n WHERE n.status = 1 AND n.type = '%s' ORDER BY n.changed DESC", array($content_type), $from = 0, $count = 5);
+  while ($record = db_fetch_object($result)) {
+    $nodes[] = node_load($record->nid);
+  }
+  return $nodes;
+}
+
+/**
+ * You can easily override this function at the theme level
+ */
+function theme_content_slider($nodes = array(), $delta = 0) {
+  $output  = "<div id='slider". $delta ."' class='sliderwrapper'>\n";
+  foreach ($nodes as $key => $node) {
+    $output .= "  <div class='contentdiv'>\n";
+    $output .= "    <a href='". url('node/'. $node->nid) ."'>". node_view($node, $teaser = TRUE, $page = FALSE, $links = FALSE) ."</a>\n";
+    $output .= "  </div>\n";
+  }
+  $output .= "</div>\n";
+  $output .= "<div id='paginate-slider". $delta ."' class='pagination'></div>\n";
+  return $output;
+}
+
+/**
+ * Implementation of hook_theme().
+ *
+ */
+function content_slider_theme() {
+  return array(
+    'content_slider' => array(
+      'arguments' => array('nodes' => NULL, 'delta' => NULL),
+    ),
+  );
+}

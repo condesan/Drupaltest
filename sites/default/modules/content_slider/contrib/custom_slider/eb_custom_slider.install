@@ -1,0 +1,79 @@
+<?php
+
+function eb_custom_slider_uninstall() {
+  db_query("DROP TABLE slider");
+  db_query("DROP TABLE slider_video");
+
+$thumb_id = db_result(db_query("SELECT presetid FROM imagecache_preset WHERE presetname = '%s'","eb_custom_slider_thumb")); 
+
+$main_id = db_result(db_query("SELECT presetid FROM imagecache_preset WHERE presetname = '%s'","eb_custom_slider_main")); 
+
+
+  db_query("DELETE FROM {imagecache_action} WHERE presetid = %d", $thumb_id);
+  db_query("DELETE FROM {imagecache_action} WHERE presetid = %d", $main_id);
+ 
+
+ db_query("DELETE FROM {imagecache_preset} WHERE presetname = 'eb_custom_slider_thumb'");
+  db_query("DELETE FROM {imagecache_preset} WHERE presetname = 'eb_custom_slider_thumb'");
+  // Remove tables.
+  //drupal_uninstall_schema('eb_custom_slider');
+
+ variable_set('install_cck',0);
+}
+
+
+
+  
+  
+  
+  
+
+
+
+function eb_custom_slider_install() {
+  
+//drupal_install_schema('eb_custom_slider');
+
+db_query("CREATE TABLE `slider` (`slider_id` INT( 11 ) NOT NULL AUTO_INCREMENT ,`slider_title` LONGTEXT NOT NULL ,`image_path` VARCHAR( 256 ) NOT NULL ,`nid` INT( 11 ) NOT NULL ,  PRIMARY KEY ( `slider_id` ))"); 
+
+db_query("CREATE TABLE `slider_video` (`slider_id` INT( 11 ) NOT NULL AUTO_INCREMENT ,`slider_title` LONGTEXT NOT NULL ,`videocode` LONGTEXT NOT NULL ,`nid` INT( 11 ) NOT NULL , `thumb` VARCHAR(256), PRIMARY KEY ( `slider_id` ))");  
+
+
+db_query("ALTER TABLE `slider` ADD `url` LONGTEXT NOT NULL");
+
+db_query("INSERT INTO imagecache_preset ( presetname ) VALUES ('eb_custom_slider_thumb')");
+
+db_query("INSERT INTO imagecache_preset ( presetname ) VALUES ('eb_custom_slider_main')");
+
+
+
+$thumb_id = db_result(db_query("SELECT presetid FROM imagecache_preset WHERE presetname = '%s'","eb_custom_slider_thumb")); 
+
+$main_id = db_result(db_query("SELECT presetid FROM imagecache_preset WHERE presetname = '%s'","eb_custom_slider_main")); 
+
+$var1 = 'a:3:{s:3:"fit";s:6:"inside";s:5:"width";s:2:"35";s:6:"height";s:2:"35";}';
+$var2 = 'a:2:{s:5:"width";s:2:"35";s:6:"height";s:2:"35";}';
+$var3 = 'a:2:{s:5:"width";s:2:"35";s:6:"height";s:2:"35";}';
+$var4 = 'a:3:{s:3:"fit";s:6:"inside";s:5:"width";s:2:"400";s:6:"height";s:2:"200";}';
+$var5 = 'a:2:{s:5:"width";s:2:"400";s:6:"height";s:2:"200";}';
+$var6 = 'a:2:{s:5:"width";s:3:"400";s:6:"height";s:3:"200";}';
+
+
+db_query("INSERT INTO imagecache_action ( presetid , weight , module ,action , data ) VALUES ($thumb_id , 10 , 'imagecache' , 'imagecache_deprecated_scale' , '%s' ) ",$var1);
+
+db_query("INSERT INTO imagecache_action ( presetid , weight , module ,action , data ) VALUES ($thumb_id , 10 , 'imagecache' , 'imagecache_resize' , '%s' )",$var2);
+
+db_query("INSERT INTO imagecache_action ( presetid , weight , module ,action , data ) VALUES ($thumb_id , 10 , 'imagecache' , 'imagecache_scale_and_crop' , '%s')",$var3);
+
+
+//db_query("INSERT INTO imagecache_action ( presetid , weight , module ,action , data ) VALUES ($main_id , 10 , 'imagecache' , 'imagecache_deprecated_scale' , '%s' )",$var4);
+
+//db_query("INSERT INTO imagecache_action ( presetid , weight , module ,action , data ) VALUES ($main_id , 10 , 'imagecache' , 'imagecache_resize' , '%s' )", $var5);
+
+db_query("INSERT INTO imagecache_action ( presetid , weight , module ,action , data ) VALUES ($main_id , 10 , 'imagecache' , 'imagecache_scale_and_crop' , '%s' )",$var6);
+
+
+}
+
+
+

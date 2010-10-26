@@ -1,0 +1,90 @@
+# $Id: fr.po.po,v 1.1 2009/02/20 14:23:31 sbordage Exp $
+#
+# French translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  content_slider.module,v 1.2 2009/01/10 19:22:22 ebizondrupalservices
+#  content_slider.info: n/a
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: French translation for Drupal Faceted Search\n"
+"POT-Creation-Date: 2009-02-13 21:01+0100\n"
+"PO-Revision-Date: 2009-02-17 19:02+0100\n"
+"Last-Translator: Stéphane Bordage <sbordage@breek.fr>\n"
+"Language-Team: Stéphane Bordage, Breek <sbordage@breek.fr>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: french\n"
+"X-Poedit-Country: France\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: content_slider.module:36
+msgid "Setting Content Slider."
+msgstr "Paramétrer Content Slider"
+
+#: content_slider.module:43;35
+msgid "Content Slider"
+msgstr "Content Slider"
+
+#: content_slider.module:59
+msgid "Basic settings"
+msgstr "Paramètres généraux"
+
+#: content_slider.module:66
+msgid "Auto rotate contents"
+msgstr "Rotation automatique des contenus"
+
+#: content_slider.module:68
+msgid "Display content without mouse click."
+msgstr "Afficher le contenu sans clic de souris."
+
+#: content_slider.module:74
+msgid "Glide animation duration (in milliseconds)"
+msgstr "Durée de l'effet de glissement (en millisecondes)"
+
+#: content_slider.module:80
+msgid "Set direction of glide"
+msgstr "Définir la direction du glissement"
+
+#: content_slider.module:91
+msgid "Slider content source (based on Drupal content-type)"
+msgstr "Type de contenu sources (basés sur les types de contenu Drupal)"
+
+#: content_slider.module:98
+msgid "Content type for Slider 1"
+msgstr "Type de contenu pour le Slider 1"
+
+#: content_slider.module:104
+msgid "Content type for Slider 2"
+msgstr "Type de contenu pour le Slider 2"
+
+#: content_slider.module:110
+msgid "Content type for Slider 3"
+msgstr "Type de contenu pour le Slider 3"
+
+#: content_slider.module:28
+msgid "access content_slider"
+msgstr "accéder à content_slider"
+
+#: content_slider.module:28
+msgid "administer content_slider"
+msgstr "gérer content_slider"
+
+#: content_slider.module:0
+msgid "content_slider"
+msgstr "content_slider"
+
+#: content_slider.info:0
+msgid "Featured Content Slider Block"
+msgstr "Bloc du module Content Slider"
+
+#: content_slider.info:0
+msgid "Display content and image in Slide show mode using jQuery for Drupal 6. Module by Ebizon Technologie. (http://www.ebizontek.com)"
+msgstr "Affiche du contenu et des images sous forme de diaporama en utilisant jQuery pour Drupal 6. Module développé par Ebizon Technologie. (http://www.ebizontek.com)"
+
+#: content_slider.info:0
+msgid "Other"
+msgstr "Autre"
+
