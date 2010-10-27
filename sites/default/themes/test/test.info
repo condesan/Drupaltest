@@ -13,3 +13,4 @@ datestamp = "1281559292"
 scripts[] = js/chili-1.7.pack.js
 scripts[] = js/jquery.cycle.all.2.72.js
 scripts[] = js/jquery.easing.1.1.1.js
+scripts[] = js/slideshow.js
